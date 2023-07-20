@@ -1,0 +1,355 @@
+{
+	"info": {
+		"_postman_id": "cca86bef-81d9-48c1-8c0e-e79e3739707b",
+		"name": "Sprint 17 explore-with-me",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "26151356",
+		"_collection_link": "https://solar-resonance-43795.postman.co/workspace/Team-Workspace~fca7e3a9-ca11-44e5-83dc-194aad62e62f/collection/26151356-cca86bef-81d9-48c1-8c0e-e79e3739707b?action=share&creator=26151356&source=collection_link"
+	},
+	"item": [
+		{
+			"name": "POST hit test",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test(\"Ответ должен содержать код статуса 201\", function() {\r",
+							"    pm.expect(pm.response.code).to.equal(201);\r",
+							"});"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n  \"app\": \"ewm-main-service\",\r\n  \"uri\": \"/events/1\",\r\n  \"ip\": \"100.163.0.1\",\r\n  \"timestamp\": \"2022-09-06 11:00:23\"\r\n} ",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://localhost:9090/hit",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "9090",
+					"path": [
+						"hit"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "POST hit test  add second hit",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test(\"Ответ должен содержать код статуса 201\", function() {\r",
+							"    pm.expect(pm.response.code).to.equal(201);\r",
+							"});"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n  \"app\": \"ewm-main-service\",\r\n  \"uri\": \"/events/1\",\r\n  \"ip\": \"100.163.0.1\",\r\n  \"timestamp\": \"2022-09-06 11:30:23\"\r\n} ",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://localhost:9090/hit",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "9090",
+					"path": [
+						"hit"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "POST hit test add hit with another ip",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test(\"Ответ должен содержать код статуса 201\", function() {\r",
+							"    pm.expect(pm.response.code).to.equal(201);\r",
+							"});"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n  \"app\": \"ewm-main-service\",\r\n  \"uri\": \"/events/1\",\r\n  \"ip\": \"200.163.0.1\",\r\n  \"timestamp\": \"2022-09-06 12:00:23\"\r\n} ",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://localhost:9090/hit",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "9090",
+					"path": [
+						"hit"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "GET stats all test not uniq and without uris",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"const body = pm.response.json();\r",
+							"\r",
+							"pm.test(\"Ответ должен содержать код статуса 200 и список просмотров в формате json\", () => {\r",
+							"    pm.response.to.be.ok; \r",
+							"    pm.response.to.be.withBody; \r",
+							"    pm.response.to.be.json;\r",
+							"    pm.expect(body).is.an('array');\r",
+							"})\r",
+							"\r",
+							"const target = pm.response.json();\r",
+							"\r",
+							"pm.test(\"Посты должны содержать поля: app, uri, hits\", function () {\r",
+							"    pm.expect(target[0]).to.have.all.keys('app', 'uri', 'hits');\r",
+							"});"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "http://localhost:9090/stats?start=2022-09-06 11:00:23&end=2022-09-06 12:30:23",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "9090",
+					"path": [
+						"stats"
+					],
+					"query": [
+						{
+							"key": "start",
+							"value": "2022-09-06 11:00:23"
+						},
+						{
+							"key": "end",
+							"value": "2022-09-06 12:30:23"
+						}
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "GET test with unique param(must be only 1 response)",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"const body = pm.response.json();\r",
+							"\r",
+							"pm.test(\"Ответ должен содержать код статуса 200 и список просмотров в формате json\", () => {\r",
+							"    pm.response.to.be.ok; \r",
+							"    pm.response.to.be.withBody; \r",
+							"    pm.response.to.be.json;\r",
+							"    pm.expect(body).is.an('array');\r",
+							"})\r",
+							"\r",
+							"const target = pm.response.json();\r",
+							"\r",
+							"pm.test(\"Посты должны содержать поля: app, uri, hits\", function () {\r",
+							"    pm.expect(target[0]).to.have.all.keys('app', 'uri', 'hits');\r",
+							"});\r",
+							"\r",
+							"pm.test(\"Должны получить 1 запись\", function () {\r",
+							"    pm.expect(target.length).to.be.equals(1);\r",
+							"});"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "http://localhost:9090/stats?start=2022-09-06 11:00:23&end=2022-09-06 12:00:23&unique=true",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "9090",
+					"path": [
+						"stats"
+					],
+					"query": [
+						{
+							"key": "start",
+							"value": "2022-09-06 11:00:23"
+						},
+						{
+							"key": "end",
+							"value": "2022-09-06 12:00:23"
+						},
+						{
+							"key": "unique",
+							"value": "true"
+						}
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "POST new hit with another uri",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test(\"Ответ должен содержать код статуса 201\", function() {\r",
+							"    pm.expect(pm.response.code).to.equal(201);\r",
+							"});"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n  \"app\": \"ewm-main-service\",\r\n  \"uri\": \"/hit/1\",\r\n  \"ip\": \"500.163.0.1\",\r\n  \"timestamp\": \"2022-09-06 12:30:00\"\r\n} ",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://localhost:9090/hit",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "9090",
+					"path": [
+						"hit"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "GET test with uris",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"const body = pm.response.json();\r",
+							"\r",
+							"pm.test(\"Ответ должен содержать код статуса 200 и список просмотров в формате json\", () => {\r",
+							"    pm.response.to.be.ok; \r",
+							"    pm.response.to.be.withBody; \r",
+							"    pm.response.to.be.json;\r",
+							"    pm.expect(body).is.an('array');\r",
+							"})\r",
+							"\r",
+							"const target = pm.response.json();\r",
+							"\r",
+							"pm.test(\"Посты должны содержать поля: app, uri, hits\", function () {\r",
+							"    pm.expect(target[0]).to.have.all.keys('app', 'uri', 'hits');\r",
+							"});\r",
+							"\r",
+							"pm.test(\"При запросе по конкретному uris должны получить 1 запись\", function () {\r",
+							"    pm.expect(target.length).to.equal(1);\r",
+							"});"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "http://localhost:9090/stats?start=2022-09-06 11:00:23&end=2022-09-06 12:30:23&uris=/hit/1",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "9090",
+					"path": [
+						"stats"
+					],
+					"query": [
+						{
+							"key": "start",
+							"value": "2022-09-06 11:00:23"
+						},
+						{
+							"key": "end",
+							"value": "2022-09-06 12:30:23"
+						},
+						{
+							"key": "uris",
+							"value": "/hit/1"
+						},
+						{
+							"key": "unique",
+							"value": "true",
+							"disabled": true
+						}
+					]
+				}
+			},
+			"response": []
+		}
+	]
+}
