@@ -1,20 +1,20 @@
 package ru.practicum.main_service.user.mapper;
 
-import ru.practicum.main_service.user.dto.UserRequestDto;
-import ru.practicum.main_service.user.dto.UserResponseDto;
+import ru.practicum.main_service.user.dto.NewUserRequest;
+import ru.practicum.main_service.user.dto.UserDto;
 import ru.practicum.main_service.user.dto.UserShortDto;
 import ru.practicum.main_service.user.model.User;
 
 public class UserMapper {
-    public static User toUser(UserRequestDto userRequestDto) {
+    public static User toUser(NewUserRequest newUserRequest) {
         return User.builder()
-                .email(userRequestDto.getEmail())
-                .name(userRequestDto.getName())
+                .email(newUserRequest.getEmail())
+                .name(newUserRequest.getName())
                 .build();
     }
 
-    public static UserResponseDto toUserResponseDto(User user) {
-        return UserResponseDto.builder()
+    public static UserDto toUserResponseDto(User user) {
+        return UserDto.builder()
                 .id(user.getId())
                 .name(user.getName())
                 .email(user.getEmail())

@@ -13,8 +13,8 @@ import java.util.List;
 @NoArgsConstructor
 @Builder
 public class UpdateCompilationRequest {
-    @Size(min = 3, max = 120)
-    private String title;
-    private Boolean pinned;
     private List<Long> events;
+    private Boolean pinned;
+    @Size(min = 1, max = 50)
+    private String title;
 }

@@ -5,7 +5,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
-import ru.practicum.main_service.category.dto.CategoryResponseDto;
+import ru.practicum.main_service.category.dto.CategoryDto;
 import ru.practicum.main_service.category.service.CategoryService;
 
 import javax.validation.constraints.Positive;
@@ -21,19 +21,19 @@ public class CategoryPublicController {
 
     @GetMapping
     @ResponseStatus(HttpStatus.OK)
-    public List<CategoryResponseDto> getAll(@RequestParam(required = false, defaultValue = "0") @PositiveOrZero Integer from,
-                                            @RequestParam(required = false, defaultValue = "10") @Positive Integer size) {
+    public List<CategoryDto> getAll(@RequestParam(required = false, defaultValue = "0") @PositiveOrZero Integer from,
+                                    @RequestParam(required = false, defaultValue = "10") @Positive Integer size) {
         log.info("Пришел GET запрос на получение всех категорий с параметрами from = {}, size = {}", from, size);
-        List<CategoryResponseDto> categories = categoryService.getAll(PageRequest.of(from / size, size));
+        List<CategoryDto> categories = categoryService.getAll(PageRequest.of(from / size, size));
         log.info("Ответ отправлен {}", categories);
         return categories;
     }
 
     @GetMapping("/{catId}")
     @ResponseStatus(HttpStatus.OK)
-    public CategoryResponseDto getById(@PathVariable Long catId) {
+    public CategoryDto getById(@PathVariable Long catId) {
         log.info("Пришел GET запрос на получение категории с id = {}", catId);
-        CategoryResponseDto category = categoryService.getById(catId);
+        CategoryDto category = categoryService.getById(catId);
         log.info("Ответ отправлен {}", category);
         return category;
     }

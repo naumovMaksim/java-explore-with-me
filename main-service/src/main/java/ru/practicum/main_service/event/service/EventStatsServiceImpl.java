@@ -6,9 +6,9 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
+import ru.practicum.dto.ViewStatsDto;
 import ru.practicum.main_service.event.model.Event;
 import ru.practicum.main_service.event.repository.RequestRepository;
-import ru.practicum.stats_service.model.ViewStats;
 import ru.practicum.stats_client.StatsClient;
 
 import javax.servlet.http.HttpServletRequest;
@@ -37,11 +37,11 @@ public class EventStatsServiceImpl implements EventStatsService {
     }
 
     @Override
-    public List<ViewStats> getStats(LocalDateTime start, LocalDateTime end, List<String> uris, Boolean unique) {
+    public List<ViewStatsDto> getStats(LocalDateTime start, LocalDateTime end, List<String> uris, Boolean unique) {
         ResponseEntity<Object> response = statsClient.getStats(start, end, uris, unique);
 
         try {
-            return Arrays.asList(mapper.readValue(mapper.writeValueAsString(response.getBody()), ViewStats[].class));
+            return Arrays.asList(mapper.readValue(mapper.writeValueAsString(response.getBody()), ViewStatsDto[].class));
         } catch (IOException exception) {
             throw new ClassCastException(exception.getMessage());
         }
@@ -65,7 +65,7 @@ public class EventStatsServiceImpl implements EventStatsService {
             LocalDateTime end = LocalDateTime.now();
             List<String> uris = published.stream().map(Event::getId).map(id -> ("/events/" + id)).collect(Collectors.toList());
 
-            List<ViewStats> stats = getStats(start, end, uris, null);
+            List<ViewStatsDto> stats = getStats(start, end, uris, true);
             stats.forEach(stat -> {
                 Long eventId = Long.parseLong(stat.getUri().split("/", 0)[2]);
                 views.put(eventId, views.getOrDefault(eventId, 0L) + stat.getHits());

@@ -5,8 +5,8 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import ru.practicum.main_service.exception.DataNotFoundException;
-import ru.practicum.main_service.user.dto.UserRequestDto;
-import ru.practicum.main_service.user.dto.UserResponseDto;
+import ru.practicum.main_service.user.dto.NewUserRequest;
+import ru.practicum.main_service.user.dto.UserDto;
 import ru.practicum.main_service.user.mapper.UserMapper;
 import ru.practicum.main_service.user.model.User;
 import ru.practicum.main_service.user.repository.UserRepository;
@@ -21,13 +21,13 @@ public class UserServiceImpl implements UserService {
 
     @Override
     @Transactional
-    public UserResponseDto create(UserRequestDto userRequestDto) {
-        User user = repository.save(UserMapper.toUser(userRequestDto));
+    public UserDto create(NewUserRequest newUserRequest) {
+        User user = repository.save(UserMapper.toUser(newUserRequest));
         return UserMapper.toUserResponseDto(user);
     }
 
     @Override
-    public List<UserResponseDto> get(List<Long> ids, Pageable pageable) {
+    public List<UserDto> get(List<Long> ids, Pageable pageable) {
         if (ids == null || ids.isEmpty()) {
             return repository.findAll(pageable).stream().map(UserMapper::toUserResponseDto).collect(Collectors.toList());
         } else {
@@ -46,5 +46,10 @@ public class UserServiceImpl implements UserService {
     @Override
     public User getUserById(Long id) {
         return repository.findById(id).orElseThrow(() -> new DataNotFoundException("Пользователь с таким id не найден"));
+    }
+
+    @Override
+    public Long usersCount() {
+        return (long) repository.findAll().size();
     }
 }

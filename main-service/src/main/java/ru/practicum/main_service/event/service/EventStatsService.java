@@ -1,7 +1,7 @@
 package ru.practicum.main_service.event.service;
 
+import ru.practicum.dto.ViewStatsDto;
 import ru.practicum.main_service.event.model.Event;
-import ru.practicum.stats_service.model.ViewStats;
 
 import javax.servlet.http.HttpServletRequest;
 import java.time.LocalDateTime;
@@ -11,7 +11,7 @@ import java.util.Map;
 public interface EventStatsService {
     void add(HttpServletRequest request);
 
-    List<ViewStats> getStats(LocalDateTime start, LocalDateTime end, List<String> uris, Boolean unique);
+    List<ViewStatsDto> getStats(LocalDateTime start, LocalDateTime end, List<String> uris, Boolean unique);
 
     Map<Long, Long> getViews(List<Event> events);
 

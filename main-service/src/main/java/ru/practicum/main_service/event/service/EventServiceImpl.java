@@ -6,7 +6,6 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import ru.practicum.main_service.category.mapper.CategoryMapper;
 import ru.practicum.main_service.category.model.Category;
 import ru.practicum.main_service.category.service.CategoryService;
 import ru.practicum.main_service.event.dto.*;
@@ -20,6 +19,7 @@ import ru.practicum.main_service.event.repository.EventRepository;
 import ru.practicum.main_service.event.repository.LocationRepository;
 import ru.practicum.main_service.exception.DataConflictException;
 import ru.practicum.main_service.exception.DataNotFoundException;
+import ru.practicum.main_service.exception.DateNotCorrectException;
 import ru.practicum.main_service.user.model.User;
 import ru.practicum.main_service.user.service.UserService;
 
@@ -44,16 +44,56 @@ public class EventServiceImpl implements EventService {
         if (rangeStart != null && rangeEnd != null && rangeStart.isAfter(rangeEnd)) {
             log.error("Некорректо задан временной интервал " +
                     "rangeStart = {}, rangeEnd = {}}", rangeStart, rangeEnd);
-            throw new DataConflictException(String.format("Некорректо задан временной интервал " +
+            throw new DateNotCorrectException(String.format("Некорректо задан временной интервал " +
                     "rangeStart = %s, rangeEnd = %s", rangeStart, rangeEnd));
+        }
+
+        if (rangeStart == null) {
+            Optional<Event> event = eventRepository.findById(1L);
+            if (event.isEmpty()) {
+                return Collections.emptyList();
+            } else {
+                rangeStart = event.get().getEventDate();
+            }
+        }
+
+        if (rangeEnd == null) {
+            List<Event> events = eventRepository.findAll();
+            if (events.isEmpty()) {
+                return Collections.emptyList();
+            }
+            LinkedList<Event> linkedListEvents = new LinkedList<>(events);
+            linkedListEvents.sort(Comparator.comparing(Event::getId));
+            Event event = linkedListEvents.getLast();
+            rangeEnd = event.getEventDate();
+        }
+
+        if (categories == null) {
+            categories = new ArrayList<>();
+            for (Long i = 1L; i <= categoryService.categoriesCount(); i++) {
+                categories.add(i);
+            }
+        }
+
+        if (users == null) {
+            users = new ArrayList<>();
+            for (Long i = 1L; i <= userService.usersCount(); i++) {
+                users.add(i);
+            }
+        }
+
+        if (states == null) {
+            states = new ArrayList<>();
+            states.addAll(List.of(EventState.PENDING, EventState.CANCELED, EventState.PUBLISHED));
         }
 
         List<Event> events = eventRepository.findAllByInitiatorIdInAndCategoryIdInAndEventDateBetween(users, categories,
                 rangeStart, rangeEnd, PageRequest.of(from / size, size));
         if (states.size() > 0) {
             List<Event> filteredEvents = new ArrayList<>();
+            List<EventState> finalStates = states;
             events.forEach(event -> {
-                for (EventState state : states) {
+                for (EventState state : finalStates) {
                     if (event.getState().equals(state)) {
                         filteredEvents.add(event);
                     }
@@ -65,7 +105,7 @@ public class EventServiceImpl implements EventService {
         Map<Long, Long> views = statsService.getViews(events);
         Map<Long, Long> confirmedRequests = statsService.getConfirmedRequests(events);
 
-        return events.stream().map(event -> EventMapper.toEventFullDto(event, confirmedRequests.getOrDefault(event.getId(), 0L),
+        return events.stream().map((event) -> EventMapper.toEventFullDto(event, confirmedRequests.getOrDefault(event.getId(), 0L),
                 views.getOrDefault(event.getId(), 0L))).collect(Collectors.toList());
     }
 
@@ -75,7 +115,7 @@ public class EventServiceImpl implements EventService {
         if (updateEventAdminRequest.getEventDate() != null &&
                 updateEventAdminRequest.getEventDate().isBefore(LocalDateTime.now().plusHours(1))) {
             log.error("Не верно указано время начала мероприятия {}", updateEventAdminRequest.getEventDate());
-            throw new DataConflictException(String.format("Не верно указано время начала мероприятия %s",
+            throw new DateNotCorrectException(String.format("Не верно указано время начала мероприятия %s",
                     updateEventAdminRequest.getEventDate()));
         }
 
@@ -88,18 +128,11 @@ public class EventServiceImpl implements EventService {
         if (updateEventAdminRequest.getDescription() != null) {
             event.setDescription(updateEventAdminRequest.getDescription());
         }
-        if (updateEventAdminRequest.getCategory() != null) {
-            event.setCategory(CategoryMapper.toCategory(categoryService.getById(updateEventAdminRequest.getCategory())));
-        }
         if (updateEventAdminRequest.getEventDate() != null) {
             event.setEventDate(updateEventAdminRequest.getEventDate());
         }
         if (updateEventAdminRequest.getLocation() != null) {
-            if (locationRepository.findByLatAndLon(updateEventAdminRequest.getLocation().getLat(),
-                    updateEventAdminRequest.getLocation().getLon()).isPresent()) {
-                locationRepository.save(LocationMapper.toLocation(updateEventAdminRequest.getLocation()));
-            }
-            event.setLocation(LocationMapper.toLocation(updateEventAdminRequest.getLocation()));
+            event.setLocation(getLocation(updateEventAdminRequest.getLocation()));
         }
         if (updateEventAdminRequest.getPaid() != null) {
             event.setPaid(updateEventAdminRequest.getPaid());
@@ -138,6 +171,9 @@ public class EventServiceImpl implements EventService {
                     break;
             }
         }
+        if (updateEventAdminRequest.getCategory() != null) {
+            event.setCategory(categoryService.getCategoryById(updateEventAdminRequest.getCategory()));
+        }
 
         Map<Long, Long> views = statsService.getViews(List.of(event));
         Map<Long, Long> confirmedRequests = statsService.getConfirmedRequests(List.of(event));
@@ -164,14 +200,14 @@ public class EventServiceImpl implements EventService {
     public EventFullDto createEventByUser(Long userId, NewEventDto newEventDto) {
         if (newEventDto.getEventDate() != null && newEventDto.getEventDate().isBefore(LocalDateTime.now().plusHours(2))) {
             log.error("Не верно указано время начала мероприятия {}", newEventDto.getEventDate());
-            throw new DataConflictException(String.format("Не верно указано время начала мероприятия %s",
+            throw new DateNotCorrectException(String.format("Не верно указано время начала мероприятия %s",
                     newEventDto.getEventDate()));
         }
 
         User eventUser = userService.getUserById(userId);
         Category eventCategory = categoryService.getCategoryById(newEventDto.getCategory());
         Location eventLocation = locationRepository.findByLatAndLon(newEventDto.getLocation().getLat(),
-                    newEventDto.getLocation().getLon()).orElse(locationRepository.save(LocationMapper.toLocation(newEventDto.getLocation())));
+                newEventDto.getLocation().getLon()).orElse(locationRepository.save(LocationMapper.toLocation(newEventDto.getLocation())));
 
         Event newEvent = EventMapper.toEvent(newEventDto, eventUser, eventCategory, eventLocation, LocalDateTime.now(), EventState.PENDING);
 
@@ -195,7 +231,7 @@ public class EventServiceImpl implements EventService {
                 updateEventUserRequest.getEventDate().isBefore(LocalDateTime.now().plusHours(1))) {
             log.error("Не верно указано время начала мероприятия {}",
                     updateEventUserRequest.getEventDate());
-            throw new DataConflictException(String.format("Не верно указано время начала мероприятия %s",
+            throw new DateNotCorrectException(String.format("Не верно указано время начала мероприятия %s",
                     updateEventUserRequest.getEventDate()));
         }
 
@@ -213,18 +249,11 @@ public class EventServiceImpl implements EventService {
         if (updateEventUserRequest.getDescription() != null) {
             event.setDescription(updateEventUserRequest.getDescription());
         }
-        if (updateEventUserRequest.getCategory() != null) {
-            event.setCategory(CategoryMapper.toCategory(categoryService.getById(updateEventUserRequest.getCategory())));
-        }
         if (updateEventUserRequest.getEventDate() != null) {
             event.setEventDate(updateEventUserRequest.getEventDate());
         }
         if (updateEventUserRequest.getLocation() != null) {
-            if (locationRepository.findByLatAndLon(updateEventUserRequest.getLocation().getLat(),
-                    updateEventUserRequest.getLocation().getLon()).isPresent()) {
-                locationRepository.save(LocationMapper.toLocation(updateEventUserRequest.getLocation()));
-            }
-            event.setLocation(LocationMapper.toLocation(updateEventUserRequest.getLocation()));
+            event.setLocation(getLocation(updateEventUserRequest.getLocation()));
         }
         if (updateEventUserRequest.getPaid() != null) {
             event.setPaid(updateEventUserRequest.getPaid());
@@ -248,6 +277,10 @@ public class EventServiceImpl implements EventService {
                     break;
             }
         }
+        if (updateEventUserRequest.getCategory() != null) {
+            event.setCategory(categoryService.getCategoryById(updateEventUserRequest.getCategory()));
+        }
+
         return getEventFullDto(eventRepository.save(event));
     }
 
@@ -257,18 +290,63 @@ public class EventServiceImpl implements EventService {
                                                  Integer size, HttpServletRequest request) {
         if (rangeStart != null && rangeEnd != null && rangeStart.isAfter(rangeEnd)) {
             log.error("Некорректо задан временной интервал rangeStart = {}, rangeEnd = {}", rangeStart, rangeEnd);
-            throw new DataConflictException(String.format("Некорректо задан временной интервал " +
+            throw new DateNotCorrectException(String.format("Некорректо задан временной интервал " +
                     "rangeStart = %s, rangeEnd = %s", rangeStart, rangeEnd));
         }
 
-        List<Event> events = eventRepository.findAllByAnnotationOrDescriptionAndCategoryIdInAndPaidAndEventDateBetween(text,
-                text, categories, paid, rangeStart, rangeEnd, PageRequest.of(from / size, size));
+        if (rangeStart == null) {
+            Optional<Event> event = eventRepository.findById(1L);
+            if (event.isEmpty()) {
+                return Collections.emptyList();
+            } else {
+                rangeStart = event.get().getEventDate();
+            }
+        }
+
+        if (rangeEnd == null) {
+            List<Event> events = eventRepository.findAll();
+            if (events.isEmpty()) {
+                return Collections.emptyList();
+            }
+            LinkedList<Event> linkedListEvents = new LinkedList<>(events);
+            linkedListEvents.sort(Comparator.comparing(Event::getId));
+            Event event = linkedListEvents.getLast();
+            rangeEnd = event.getEventDate();
+        }
+
+        if (categories == null) {
+            categories = new ArrayList<>();
+            for (Long i = 1L; i <= categoryService.categoriesCount(); i++) {
+                categories.add(i);
+            }
+        }
+
+        List<Event> events = new ArrayList<>();
+
+        if (text != null && paid != null) {
+            events = eventRepository.findAllByAnnotationOrDescriptionAndCategoryIdInAndPaidAndEventDateBetween(text,
+                    text, categories, paid, rangeStart, rangeEnd, PageRequest.of(from / size, size));
+        }
+        if (text == null) {
+            events = eventRepository.findAllByCategoryIdInAndPaidAndEventDateBetween(categories, paid, rangeStart, rangeEnd,
+                    PageRequest.of(from / size, size));
+        }
+        if (paid == null) {
+            events = eventRepository.findAllByAnnotationOrDescriptionAndCategoryIdInAndEventDateBetween(text, text, categories,
+                    rangeStart, rangeEnd, PageRequest.of(from / size, size));
+        }
+        if (text == null && paid == null) {
+            events = eventRepository.findAllByCategoryIdInAndEventDateBetween(categories,
+                    rangeStart, rangeEnd, PageRequest.of(from / size, size));
+        }
+
         if (events.isEmpty()) {
             return Collections.emptyList();
         }
 
         Map<Long, Integer> participantLimits = new HashMap<>();
         events.forEach(event -> participantLimits.put(event.getId(), event.getParticipantLimit()));
+
         Map<Long, Long> views = statsService.getViews(events);
         Map<Long, Long> confirmedRequests = statsService.getConfirmedRequests(events);
 
@@ -335,5 +413,11 @@ public class EventServiceImpl implements EventService {
 
         return EventMapper.toEventFullDto(event, confirmedRequests.getOrDefault(event.getId(), 0L),
                 views.getOrDefault(event.getId(), 0L));
+    }
+
+    private Location getLocation(LocationDto locationDto) {
+        Location location = LocationMapper.toLocation(locationDto);
+        return locationRepository.findByLatAndLon(location.getLat(), location.getLon())
+                .orElseGet(() -> locationRepository.save(location));
     }
 }

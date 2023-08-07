@@ -33,7 +33,8 @@ public class Request {
     @OnDelete(action = OnDeleteAction.CASCADE)
     private Event event;
 
-    @Column(name = "STATUS")
+    @Column
+    @Enumerated(EnumType.STRING)
     private RequestStatus status;
 
     @Column

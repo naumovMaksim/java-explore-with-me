@@ -4,8 +4,8 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
-import ru.practicum.main_service.category.dto.CategoryRequestDto;
-import ru.practicum.main_service.category.dto.CategoryResponseDto;
+import ru.practicum.main_service.category.dto.NewCategoryDto;
+import ru.practicum.main_service.category.dto.CategoryDto;
 import ru.practicum.main_service.category.service.CategoryService;
 
 import javax.validation.Valid;
@@ -19,18 +19,18 @@ public class CategoryAdminController {
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
-    public CategoryResponseDto add(@Valid @RequestBody CategoryRequestDto categoryRequestDto) {
-        log.info("Пришел POST запрос на создание новой категроии {}", categoryRequestDto);
-        CategoryResponseDto category = categoryService.add(categoryRequestDto);
+    public CategoryDto add(@Valid @RequestBody NewCategoryDto newCategoryDto) {
+        log.info("Пришел POST запрос на создание новой категроии {}", newCategoryDto);
+        CategoryDto category = categoryService.add(newCategoryDto);
         log.info("Ответ отправлен {}", category);
         return category;
     }
 
     @PatchMapping("/{catId}")
     @ResponseStatus(HttpStatus.OK)
-    public CategoryResponseDto edit(@PathVariable Long catId, @Valid @RequestBody CategoryRequestDto categoryRequestDto) {
-        log.info("Пришел PATCH запрос на изменение данных на {} в категории с id = {}", categoryRequestDto, catId);
-        CategoryResponseDto category = categoryService.edit(catId, categoryRequestDto);
+    public CategoryDto edit(@PathVariable Long catId, @Valid @RequestBody NewCategoryDto newCategoryDto) {
+        log.info("Пришел PATCH запрос на изменение данных на {} в категории с id = {}", newCategoryDto, catId);
+        CategoryDto category = categoryService.edit(catId, newCategoryDto);
         log.info("Ответ отправлен {}", category);
         return category;
     }

@@ -72,6 +72,16 @@ public class EventErrorHandler {
                 LocalDateTime.now().format(formatter));
     }
 
+    @ExceptionHandler(DateNotCorrectException.class)
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    public ErrorResponse handleForbiddenException(final DateNotCorrectException exception) {
+        return new ErrorResponse(HttpStatus.BAD_REQUEST.name(),
+                "Incorrectly made request.",
+                exception.getMessage(),
+                getErrors(exception),
+                LocalDateTime.now().format(formatter));
+    }
+
     @ExceptionHandler(DataNotFoundException.class)
     @ResponseStatus(HttpStatus.NOT_FOUND)
     public ErrorResponse handleNotFoundException(final DataNotFoundException exception) {

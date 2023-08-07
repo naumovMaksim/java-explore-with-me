@@ -118,7 +118,7 @@ public class RequestServiceImpl implements RequestService {
     @Override
     @Transactional
     public EventRequestStatusUpdateResult editEventRequestsByEventOwner(Long userId, Long eventId,
-                                                                         EventRequestStatusUpdateRequest eventRequestStatusUpdateRequest) {
+                                                                        EventRequestStatusUpdateRequest eventRequestStatusUpdateRequest) {
         userService.getUserById(userId);
         Event event = eventService.getEventById(eventId);
 
@@ -127,15 +127,15 @@ public class RequestServiceImpl implements RequestService {
             throw new DataConflictException(String.format("Пользователь с id = %d не явлется владельцем", userId));
         }
 
-        if (!event.getRequestModeration() || event.getParticipantLimit() == 0 || eventRequestStatusUpdateRequest.getRequestsIds().isEmpty()) {
+        if (!event.getRequestModeration() || event.getParticipantLimit() == 0 || eventRequestStatusUpdateRequest.getRequestIds().isEmpty()) {
             return new EventRequestStatusUpdateResult(Collections.emptyList(), Collections.emptyList());
         }
 
         List<Request> confirmed = new ArrayList<>();
         List<Request> rejected = new ArrayList<>();
-        List<Request> requests = repository.findAllByIdIn(eventRequestStatusUpdateRequest.getRequestsIds());
+        List<Request> requests = repository.findAllByIdIn(eventRequestStatusUpdateRequest.getRequestIds());
 
-        if (requests.size() != eventRequestStatusUpdateRequest.getRequestsIds().size()) {
+        if (requests.size() != eventRequestStatusUpdateRequest.getRequestIds().size()) {
             log.error("Не все запросы на участие найдены");
             throw new DataNotFoundException("Не все запросы на участие найдены");
         }
@@ -145,12 +145,12 @@ public class RequestServiceImpl implements RequestService {
             throw new DataConflictException("Изменять можно только заявки, находящиеся в ожидании");
         }
 
-        if (eventRequestStatusUpdateRequest.getRequestStatus().equals(RequestStatus.REJECTED)) {
+        if (eventRequestStatusUpdateRequest.getStatus().equals(RequestStatus.REJECTED)) {
             requests.forEach(request -> request.setStatus(RequestStatus.REJECTED));
             rejected.addAll(repository.saveAll(requests));
         } else {
             long confirmedRequest = statsService.getConfirmedRequests(List.of(event)).getOrDefault(eventId, 0L) +
-                    eventRequestStatusUpdateRequest.getRequestsIds().size();
+                    eventRequestStatusUpdateRequest.getRequestIds().size();
             if (event.getParticipantLimit() != 0 && (confirmedRequest > event.getParticipantLimit())) {
                 log.error("Лимит подтвержденных запросов на участие достигнут = {}", event.getParticipantLimit());
                 throw new DataConflictException(String.format("Лимит подтвержденных запросов на участие достигнут = %d", event.getParticipantLimit()));

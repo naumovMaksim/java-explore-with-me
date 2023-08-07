@@ -1,24 +1,18 @@
 package ru.practicum.main_service.category.mapper;
 
-import ru.practicum.main_service.category.dto.CategoryRequestDto;
-import ru.practicum.main_service.category.dto.CategoryResponseDto;
+import ru.practicum.main_service.category.dto.NewCategoryDto;
+import ru.practicum.main_service.category.dto.CategoryDto;
 import ru.practicum.main_service.category.model.Category;
 
 public class CategoryMapper {
-    public static Category toCategory(CategoryRequestDto categoryRequestDto) {
+    public static Category toCategory(NewCategoryDto newCategoryDto) {
         return Category.builder()
-                .name(categoryRequestDto.getName())
+                .name(newCategoryDto.getName())
                 .build();
     }
 
-    public static Category toCategory(CategoryResponseDto categoryResponseDto) {
-        return Category.builder()
-                .name(categoryResponseDto.getName())
-                .build();
-    }
-
-    public static CategoryResponseDto toCategoryResponseDto(Category category) {
-        return CategoryResponseDto.builder()
+    public static CategoryDto toCategoryResponseDto(Category category) {
+        return CategoryDto.builder()
                 .id(category.getId())
                 .name(category.getName())
                 .build();

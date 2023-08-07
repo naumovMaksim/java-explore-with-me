@@ -5,7 +5,7 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import ru.practicum.main_service.category.dto.CategoryResponseDto;
+import ru.practicum.main_service.category.dto.CategoryDto;
 import ru.practicum.main_service.event.enums.EventState;
 import ru.practicum.main_service.user.dto.UserShortDto;
 
@@ -21,7 +21,7 @@ public class EventFullDto {
     @NotBlank
     private String annotation;
     @NotNull
-    private CategoryResponseDto category;
+    private CategoryDto category;
     @NotNull
     private Long confirmedRequests;
     @NotNull

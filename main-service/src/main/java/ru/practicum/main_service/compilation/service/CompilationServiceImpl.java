@@ -65,9 +65,12 @@ public class CompilationServiceImpl implements CompilationService {
         if (updateCompilationRequest.getPinned() != null) {
             compilation.setPinned(updateCompilationRequest.getPinned());
         }
-        compilationRepository.save(compilation);
+        Compilation responseCompilation = compilationRepository.save(compilation);
+        List<Long> compilationEvents = new ArrayList<>();
+        compilation.getEvents().forEach(event -> compilationEvents.add(event.getId()));
+        List<EventShortDto> eventShortDto = eventService.getShortEvents(compilationEvents);
 
-        return CompilationMapper.toCompilationDto(compilation, eventService.getShortEvents(updateCompilationRequest.getEvents()));
+        return CompilationMapper.toCompilationDto(responseCompilation, eventShortDto);
     }
 
     @Override

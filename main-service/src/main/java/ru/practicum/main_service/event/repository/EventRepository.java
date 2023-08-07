@@ -9,15 +9,27 @@ import java.util.List;
 import java.util.Optional;
 
 public interface EventRepository extends JpaRepository<Event, Long> {
-    List<Event> findAllByInitiatorIdInAndCategoryIdInAndEventDateBetween(List<Long> users,
-                                                                                 List<Long> categories, LocalDateTime rangeStart,
-                                                                                 LocalDateTime rangeEnd, Pageable pageable);
+    List<Event> findAllByInitiatorIdInAndCategoryIdInAndEventDateBetween(List<Long> users, List<Long> categories,
+                                                                         LocalDateTime rangeStart, LocalDateTime rangeEnd,
+                                                                         Pageable pageable);
 
     List<Event> findAllByAnnotationOrDescriptionAndCategoryIdInAndPaidAndEventDateBetween(String textAnnotation,
-                                                                                       String textDescription,
-                                                                                       List<Long> categories, Boolean paid,
-                                                                                       LocalDateTime rangeStart,
-                                                                                       LocalDateTime rangeEnd, Pageable pageable);
+                                                                                          String textDescription,
+                                                                                          List<Long> categories, Boolean paid,
+                                                                                          LocalDateTime rangeStart,
+                                                                                          LocalDateTime rangeEnd, Pageable pageable);
+
+    List<Event> findAllByCategoryIdInAndPaidAndEventDateBetween(List<Long> categories, Boolean paid, LocalDateTime rangeStart,
+                                                                LocalDateTime rangeEnd, Pageable pageable);
+
+    List<Event> findAllByAnnotationOrDescriptionAndCategoryIdInAndEventDateBetween(String textAnnotation,
+                                                                                   String textDescription,
+                                                                                   List<Long> categories,
+                                                                                   LocalDateTime rangeStart,
+                                                                                   LocalDateTime rangeEnd, Pageable pageable);
+
+    List<Event> findAllByCategoryIdInAndEventDateBetween(List<Long> categories, LocalDateTime rangeStart,
+                                                         LocalDateTime rangeEnd, Pageable pageable);
 
     List<Event> findAllByInitiatorId(Long userId, Pageable pageable);
 
