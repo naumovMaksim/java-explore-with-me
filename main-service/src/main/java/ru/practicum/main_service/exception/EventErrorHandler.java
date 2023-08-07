@@ -19,7 +19,7 @@ import java.util.Objects;
 
 @RestControllerAdvice
 public class EventErrorHandler {
-    private final static DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+    private static final DateTimeFormatter FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
 
     @Getter
     @AllArgsConstructor
@@ -39,7 +39,7 @@ public class EventErrorHandler {
                 String.format("Field: %s. Error: %s", Objects.requireNonNull(exception.getFieldError()).getField(),
                         exception.getFieldError().getDefaultMessage()),
                 getErrors(exception),
-                LocalDateTime.now().format(formatter));
+                LocalDateTime.now().format(FORMATTER));
     }
 
     @ExceptionHandler({MethodArgumentTypeMismatchException.class, ConstraintViolationException.class})
@@ -49,7 +49,7 @@ public class EventErrorHandler {
                 "Incorrectly made request.",
                 exception.getMessage(),
                 getErrors(exception),
-                LocalDateTime.now().format(formatter));
+                LocalDateTime.now().format(FORMATTER));
     }
 
     @ExceptionHandler(DataIntegrityViolationException.class)
@@ -59,7 +59,7 @@ public class EventErrorHandler {
                 "Integrity constraint has been violated.",
                 exception.getMessage(),
                 getErrors(exception),
-                LocalDateTime.now().format(formatter));
+                LocalDateTime.now().format(FORMATTER));
     }
 
     @ExceptionHandler(DataConflictException.class)
@@ -69,7 +69,7 @@ public class EventErrorHandler {
                 "For the requested operation the conditions are not met.",
                 exception.getMessage(),
                 getErrors(exception),
-                LocalDateTime.now().format(formatter));
+                LocalDateTime.now().format(FORMATTER));
     }
 
     @ExceptionHandler(DateNotCorrectException.class)
@@ -79,7 +79,7 @@ public class EventErrorHandler {
                 "Incorrectly made request.",
                 exception.getMessage(),
                 getErrors(exception),
-                LocalDateTime.now().format(formatter));
+                LocalDateTime.now().format(FORMATTER));
     }
 
     @ExceptionHandler(DataNotFoundException.class)
@@ -89,7 +89,7 @@ public class EventErrorHandler {
                 "The required object was not found.",
                 exception.getMessage(),
                 getErrors(exception),
-                LocalDateTime.now().format(formatter));
+                LocalDateTime.now().format(FORMATTER));
     }
 
     private String getErrors(Exception exception) {
