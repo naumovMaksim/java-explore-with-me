@@ -32,6 +32,11 @@ public class CategoryServiceImpl implements CategoryService {
     }
 
     @Override
+    public List<Category> getAll() {
+        return repository.findAll();
+    }
+
+    @Override
     public CategoryDto getById(Long id) {
         Category category = repository.findById(id).orElseThrow(() ->
                 new DataNotFoundException(String.format("Категория с id %d не найдена", id)));
@@ -61,10 +66,5 @@ public class CategoryServiceImpl implements CategoryService {
     @Override
     public Category getCategoryById(Long id) {
         return repository.findById(id).orElseThrow(() -> new DataNotFoundException("Категория не найдена"));
-    }
-
-    @Override
-    public Long categoriesCount() {
-        return (long) repository.findAll().size();
     }
 }

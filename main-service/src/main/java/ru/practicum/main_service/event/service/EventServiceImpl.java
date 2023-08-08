@@ -69,17 +69,13 @@ public class EventServiceImpl implements EventService {
         }
 
         if (categories == null) {
-            categories = new ArrayList<>();
-            for (Long i = 1L; i <= categoryService.categoriesCount(); i++) {
-                categories.add(i);
-            }
+            List<Category> commonCategoryList = categoryService.getAll();
+            categories = commonCategoryList.stream().map(Category::getId).collect(Collectors.toList());
         }
 
         if (users == null) {
-            users = new ArrayList<>();
-            for (Long i = 1L; i <= userService.usersCount(); i++) {
-                users.add(i);
-            }
+            List<User> commonUserList = userService.getAll();
+            users = commonUserList.stream().map(User::getId).collect(Collectors.toList());
         }
 
         if (states == null) {
@@ -87,9 +83,9 @@ public class EventServiceImpl implements EventService {
             states.addAll(List.of(EventState.PENDING, EventState.CANCELED, EventState.PUBLISHED));
         }
 
-        List<Event> events = eventRepository.findAllByInitiatorIdInAndCategoryIdInAndEventDateBetween(users, categories,
+        List<Event> events = eventRepository.findAllByAdmin(users, categories,
                 rangeStart, rangeEnd, PageRequest.of(from / size, size));
-        if (states.size() > 0) {
+        if (!states.isEmpty()) {
             List<Event> filteredEvents = new ArrayList<>();
             List<EventState> finalStates = states;
             events.forEach(event -> {
@@ -112,12 +108,7 @@ public class EventServiceImpl implements EventService {
     @Override
     @Transactional
     public EventFullDto editEventByAdmin(Long eventId, UpdateEventAdminRequest updateEventAdminRequest) {
-        if (updateEventAdminRequest.getEventDate() != null &&
-                updateEventAdminRequest.getEventDate().isBefore(LocalDateTime.now().plusHours(1))) {
-            log.error("Не верно указано время начала мероприятия {}", updateEventAdminRequest.getEventDate());
-            throw new DateNotCorrectException(String.format("Не верно указано время начала мероприятия %s",
-                    updateEventAdminRequest.getEventDate()));
-        }
+        checkEventDate(updateEventAdminRequest.getEventDate());
 
         Event event = eventRepository.findById(eventId).orElseThrow(() ->
                 new DataNotFoundException(String.format("Событие с id = %d не найдено", eventId)));
@@ -227,13 +218,7 @@ public class EventServiceImpl implements EventService {
     @Override
     @Transactional
     public EventFullDto editEventByUser(Long userId, Long eventId, UpdateEventUserRequest updateEventUserRequest) {
-        if (updateEventUserRequest.getEventDate() != null &&
-                updateEventUserRequest.getEventDate().isBefore(LocalDateTime.now().plusHours(1))) {
-            log.error("Не верно указано время начала мероприятия {}",
-                    updateEventUserRequest.getEventDate());
-            throw new DateNotCorrectException(String.format("Не верно указано время начала мероприятия %s",
-                    updateEventUserRequest.getEventDate()));
-        }
+        checkEventDate(updateEventUserRequest.getEventDate());
 
         userService.getUserById(userId);
         Event event = eventRepository.findByIdAndInitiatorId(eventId, userId).orElseThrow(() ->
@@ -315,29 +300,27 @@ public class EventServiceImpl implements EventService {
         }
 
         if (categories == null) {
-            categories = new ArrayList<>();
-            for (Long i = 1L; i <= categoryService.categoriesCount(); i++) {
-                categories.add(i);
-            }
+            List<Category> commonCategoryList = categoryService.getAll();
+            categories = commonCategoryList.stream().map(Category::getId).collect(Collectors.toList());
         }
 
         List<Event> events = new ArrayList<>();
 
         if (text != null && paid != null) {
-            events = eventRepository.findAllByAnnotationOrDescriptionAndCategoryIdInAndPaidAndEventDateBetween(text,
-                    text, categories, paid, rangeStart, rangeEnd, PageRequest.of(from / size, size));
+            events = eventRepository.findAllByUser(text, categories, paid, rangeStart, rangeEnd,
+                    PageRequest.of(from / size, size));
         }
         if (text == null) {
-            events = eventRepository.findAllByCategoryIdInAndPaidAndEventDateBetween(categories, paid, rangeStart, rangeEnd,
+            events = eventRepository.findAllByUserWithoutText(categories, paid, rangeStart, rangeEnd,
                     PageRequest.of(from / size, size));
         }
         if (paid == null) {
-            events = eventRepository.findAllByAnnotationOrDescriptionAndCategoryIdInAndEventDateBetween(text, text, categories,
-                    rangeStart, rangeEnd, PageRequest.of(from / size, size));
+            events = eventRepository.findAllByUserWithoutPaid(text, categories, rangeStart, rangeEnd,
+                    PageRequest.of(from / size, size));
         }
         if (text == null && paid == null) {
-            events = eventRepository.findAllByCategoryIdInAndEventDateBetween(categories,
-                    rangeStart, rangeEnd, PageRequest.of(from / size, size));
+            events = eventRepository.findAllByUserWithoutTextAndPaid(categories, rangeStart, rangeEnd,
+                    PageRequest.of(from / size, size));
         }
 
         if (events.isEmpty()) {
@@ -419,5 +402,13 @@ public class EventServiceImpl implements EventService {
         Location location = LocationMapper.toLocation(locationDto);
         return locationRepository.findByLatAndLon(location.getLat(), location.getLon())
                 .orElseGet(() -> locationRepository.save(location));
+    }
+
+    private void checkEventDate(LocalDateTime eventDate) {
+        if (eventDate != null && eventDate.isBefore(LocalDateTime.now().plusHours(1))) {
+            log.error("Не верно указано время начала мероприятия {}", eventDate);
+            throw new DateNotCorrectException(String.format("Не верно указано время начала мероприятия %s",
+                    eventDate));
+        }
     }
 }

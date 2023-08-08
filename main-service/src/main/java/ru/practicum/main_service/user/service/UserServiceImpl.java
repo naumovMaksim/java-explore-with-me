@@ -4,6 +4,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.Assert;
 import ru.practicum.main_service.exception.DataNotFoundException;
 import ru.practicum.main_service.user.dto.NewUserRequest;
 import ru.practicum.main_service.user.dto.UserDto;
@@ -38,9 +39,9 @@ public class UserServiceImpl implements UserService {
     @Override
     @Transactional
     public void deleteById(Long id) {
-        repository.findById(id).orElseThrow(() -> new DataNotFoundException("Пользователь с таким id не найден"));
-
-        repository.deleteById(id);
+        Assert.notNull(id, "id не может быть равен null");
+        repository.deleteById(repository.findById(id).orElseThrow(() ->
+                new DataNotFoundException(String.format("Пользователь с id = %d не найден", id))).getId());
     }
 
     @Override
@@ -49,7 +50,9 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public Long usersCount() {
-        return (long) repository.findAll().size();
+    public List<User> getAll() {
+        return repository.findAll();
     }
+
+
 }

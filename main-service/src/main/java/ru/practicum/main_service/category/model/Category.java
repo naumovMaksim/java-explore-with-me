@@ -16,5 +16,5 @@ public class Category {
     private Long id;
 
     @Column(unique = true)
-    String name;
+    private String name;
 }
